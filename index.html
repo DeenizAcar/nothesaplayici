@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not Hesaplayıcı</title>
+<meta name="description" content="Vize ve projeden aldığın notlara göre finalden kaç alman gerektiğini hesapla.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #1b1f2a;
+    --muted: #6b7280;
+    --border: #e3e6ee;
+    --accent: #e8590c;
+    --accent-soft: #fff1e8;
+    --ok: #1f9d55;
+    --ok-soft: #e7f7ee;
+    --bad: #d64545;
+    --bad-soft: #fdecec;
+    --warn: #b7791f;
+    --warn-soft: #fdf6e3;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12141a;
+      --card: #1b1e27;
+      --text: #e8eaf0;
+      --muted: #9aa1b2;
+      --border: #2c303c;
+      --accent: #ff8a3d;
+      --accent-soft: #3a2416;
+      --ok: #4ade80;
+      --ok-soft: #173326;
+      --bad: #f87171;
+      --bad-soft: #3a1d1d;
+      --warn: #fbbf24;
+      --warn-soft: #3a3016;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  header h1 { margin: 0 0 4px; font-size: 1.6rem; }
+  header p { margin: 0 0 20px; color: var(--muted); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    padding: 7px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    font: inherit;
+    font-size: .9rem;
+  }
+  .chip small { color: var(--muted); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip.active small { color: #ffe3d1; }
+  .chip.add { border-style: dashed; color: var(--muted); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .card h2 { margin: 0 0 2px; font-size: 1.2rem; }
+  .card .sub { color: var(--muted); font-size: .9rem; margin-bottom: 14px; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 64px 96px;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+  }
+  .row:first-of-type { border-top: 0; }
+  .row .w { color: var(--muted); font-size: .9rem; text-align: right; }
+  .row input[type=number] {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+  }
+  .row input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  .row.final .name::after {
+    content: "FİNAL";
+    font-size: .7rem;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    vertical-align: middle;
+  }
+
+  .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+  .stat .k { color: var(--muted); font-size: .8rem; }
+  .stat .v { font-size: 1.4rem; font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 9px 8px; text-align: left; border-top: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: .85rem; border-top: 0; }
+  td.letter { font-weight: 700; width: 60px; }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: .9rem; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pill.need { background: var(--warn-soft); color: var(--warn); }
+  tr.pass td { background: var(--accent-soft); }
+
+  .hint { color: var(--muted); font-size: .85rem; margin: 10px 0 0; }
+  .btn {
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    padding: 7px 12px; border-radius: 10px; cursor: pointer; font: inherit; font-size: .9rem;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { color: var(--bad); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  .editor .row { grid-template-columns: 1fr 80px 60px 36px; }
+  .editor input[type=text] {
+    width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font: inherit;
+  }
+  .editor label { font-size: .85rem; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+
+  footer { color: var(--muted); font-size: .8rem; text-align: center; margin-top: 28px; }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 480px) {
+    .row { grid-template-columns: 1fr 48px 80px; }
+    .summary .v { font-size: 1.15rem; }
+    .editor .row { grid-template-columns: 1fr 64px 52px 32px; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎓 Not Hesaplayıcı</h1>
+    <p>Dersini seç, aldığın notları gir. Finalden kaç alman gerektiğini harf harf gösterelim.</p>
+  </header>
+
+  <div class="chips" id="chips"></div>
+  <div id="main"></div>
+
+  <footer>
+    Ağırlıklar IEU LEARN'deki "Değerlendirme Ölçütleri"nden alındı. Hocalar değiştirirse güncel hali LEARN'de.<br>
+    Harf aralıkları: AA 90 · BA 85 · BB 80 · CB 75 · CC 70 · DC 65 · DD 60 · FD 50 · FF 0. Hesaplama yuvarlama yapmaz.<br>
+    Girdiğin notlar sadece senin tarayıcında saklanır.
+  </footer>
+</div>
+
+<script src="courses.js"></script>
+<script>
+(() => {
+  const PASS_LETTER = "DD";
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+
+  let custom = store.get("nh_custom", []);
+  let scores = store.get("nh_scores", {});
+  let selected = store.get("nh_selected", COURSES[0].code);
+  let editing = null; // düzenlenen özel ders (kopya)
+
+  const allCourses = () => [...COURSES, ...custom];
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = (n) => (Math.round(n * 100) / 100).toLocaleString("tr-TR");
+  const letterOf = (avg) => GRADES.find((g) => avg >= g.min - 1e-9);
+
+  function renderChips() {
+    const chips = allCourses().map((c) =>
+      `<button class="chip ${c.code === selected && !editing ? "active" : ""}" data-code="${esc(c.code)}">
+         ${esc(c.code)} <small>${esc(c.name)}</small></button>`).join("");
+    $("#chips").innerHTML = chips + `<button class="chip add" id="addCourse">+ Kendi dersini ekle</button>`;
+    $("#chips").querySelectorAll("[data-code]").forEach((b) =>
+      b.onclick = () => { editing = null; selected = b.dataset.code; store.set("nh_selected", selected); render(); });
+    $("#addCourse").onclick = () => {
+      editing = { code: "", name: "", items: [{ name: "Ara Sınav", weight: 40 }, { name: "Final Sınavı", weight: 60, final: true }], isNew: true };
+      render();
+    };
+  }
+
+  function compute(course, vals) {
+    let known = 0, knownW = 0, emptyW = 0;
+    course.items.forEach((it, i) => {
+      const v = vals[i];
+      if (v === "" || v == null || isNaN(v)) emptyW += it.weight;
+      else { known += (Number(v) * it.weight) / 100; knownW += it.weight; }
+    });
+    return { known, knownW, emptyW };
+  }
+
+  function renderCourse(course) {
+    const vals = scores[course.code] || [];
+    const isCustom = custom.some((c) => c.code === course.code);
+    const total = course.items.reduce((s, it) => s + it.weight, 0);
+
+    const rows = course.items.map((it, i) => `
+      <div class="row ${it.final ? "final" : ""}">
+        <div class="name">${esc(it.name)}</div>
+        <div class="w">%${it.weight}</div>
+        <input type="number" min="0" max="100" step="any" inputmode="decimal" placeholder="—" data-i="${i}" value="${vals[i] ?? ""}">
+      </div>`).join("");
+
+    $("#main").innerHTML = `
+      <div class="card">
+        <h2>${esc(course.code)} · ${esc(course.name)}</h2>
+        <div class="sub">Bilmediğin notları (genelde final) boş bırak. ${total !== 100 ? `<b style="color:var(--bad)">Ağırlıklar toplamı %${total}, 100 değil!</b>` : ""}</div>
+        ${rows}
+        <div class="actions">
+          <button class="btn" id="clear">Notları temizle</button>
+          ${isCustom ? `<button class="btn" id="edit">Dersi düzenle</button>` : ""}
+        </div>
+      </div>
+      <div id="result"></div>`;
+
+    $("#main").querySelectorAll("input[data-i]").forEach((inp) => {
+      inp.oninput = () => {
+        let v = inp.value;
+        if (v !== "" && Number(v) > 100) { v = "100"; inp.value = v; }
+        if (v !== "" && Number(v) < 0) { v = "0"; inp.value = v; }
+        const arr = (scores[course.code] ||= []);
+        arr[Number(inp.dataset.i)] = v;
+        store.set("nh_scores", scores);
+        renderResult(course);
+      };
+    });
+    $("#clear").onclick = () => { delete scores[course.code]; store.set("nh_scores", scores); render(); };
+    if (isCustom) $("#edit").onclick = () => { editing = JSON.parse(JSON.stringify(course)); editing.oldCode = course.code; render(); };
+    renderResult(course);
+  }
+
+  function renderResult(course) {
+    const vals = scores[course.code] || [];
+    const { known, knownW, emptyW } = compute(course, vals);
+    const emptyNames = course.items.filter((_, i) => vals[i] === "" || vals[i] == null).map((it) => it.name);
+    const out = $("#result");
+
+    if (knownW === 0) {
+      out.innerHTML = `<div class="card"><div class="sub" style="margin:0">Notlarını girdikçe sonuç burada çıkacak.</div></div>`;
+      return;
+    }
+
+    if (emptyW === 0) {
+      const g = letterOf(known);
+      const passed = known >= GRADES.find((x) => x.letter === PASS_LETTER).min;
+      out.innerHTML = `
+        <div class="summary">
+          <div class="stat"><div class="k">Ortalama</div><div class="v">${fmt(known)}</div></div>
+          <div class="stat"><div class="k">Harf notu</div><div class="v">${g.letter}</div></div>
+          <div class="stat"><div class="k">Durum</div><div class="v" style="color:var(${passed ? "--ok" : "--bad"})">${passed ? "Geçtin" : "Kaldın"}</div></div>
+        </div>`;
+      return;
+    }
+
+    const target = emptyNames.length === 1 ? `${esc(emptyNames[0])}'dan` : "boş kalanlardan (ortalama)";
+    const rows = GRADES.filter((g) => g.min > 0).map((g) => {
+      const need = ((g.min - known) * 100) / emptyW;
+      let cell;
+      if (need <= 0) cell = `<span class="pill ok">Garanti ✓</span>`;
+      else if (need > 100) cell = `<span class="pill bad">İmkânsız</span>`;
+      else cell = `<span class="pill need">${fmt(Math.ceil(need * 100) / 100)}</span>`;
+      return `<tr class="${g.letter === PASS_LETTER ? "pass" : ""}"><td class="letter">${g.letter}</td><td>${g.min}+</td><td>${cell}</td></tr>`;
+    }).join("");
+
+    const maxAvg = known + emptyW;
+    out.innerHTML = `
+      <div class="summary">
+        <div class="stat"><div class="k">Şu ana kadar puanın</div><div class="v">${fmt(known)}</div></div>
+        <div class="stat"><div class="k">Kalan ağırlık</div><div class="v">%${emptyW}</div></div>
+        <div class="stat"><div class="k">Alabileceğin en yüksek</div><div class="v">${fmt(maxAvg)} · ${letterOf(maxAvg).letter}</div></div>
+      </div>
+      <div class="card">
+        <h2>Finalden kaç almalısın?</h2>
+        <div class="sub">Her harf notu için ${target} alman gereken en düşük not.</div>
+        <table>
+          <thead><tr><th>Harf</th><th>Ortalama</th><th>Gereken</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p class="hint">Turuncu satır geçme sınırı (DD, 60). Bölüm yönetmeliğinde final barajı veya farklı geçme notu varsa onu da kontrol et.</p>
+      </div>`;
+  }
+
+  function renderEditor() {
+    const c = editing;
+    const total = c.items.reduce((s, it) => s + (Number(it.weight) || 0), 0);
+    const rows = c.items.map((it, i) => `
+      <div class="row">
+        <input type="text" data-f="name" data-i="${i}" value="${esc(it.name)}" placeholder="Bileşen adı">
+        <input type="number" data-f="weight" data-i="${i}" value="${it.weight}" min="0" max="100" placeholder="%">
+        <label><input type="checkbox" data-f="final" data-i="${i}" ${it.final ? "checked" : ""}>Fin</label>
+        <button class="btn danger" data-del="${i}" title="Sil">×</button>
+      </div>`).join("");
+
+    $("#main").innerHTML = `
+      <div class="card editor">
+        <h2>${c.isNew ? "Yeni ders ekle" : "Dersi düzenle"}</h2>
+        <div class="sub">Başka bölümden arkadaşların da kendi dersini ekleyebilir. Ağırlıkları LEARN'deki "Değerlendirme Ölçütleri"nden bak.</div>
+        <div class="row" style="grid-template-columns: 110px 1fr">
+          <input type="text" id="code" value="${esc(c.code)}" placeholder="Kod (ör. MAT 101)">
+          <input type="text" id="name" value="${esc(c.name)}" placeholder="Ders adı">
+        </div>
+        ${rows}
+        <div class="sub" style="margin-top:8px">Toplam: <b style="color:var(${total === 100 ? "--ok" : "--bad"})">%${total}</b></div>
+        <div class="actions">
+          <button class="btn" id="addItem">+ Bileşen ekle</button>
+          <button class="btn primary" id="save">Kaydet</button>
+          <button class="btn" id="cancel">Vazgeç</button>
+          ${c.isNew ? "" : `<button class="btn danger" id="remove">Dersi sil</button>`}
+        </div>
+      </div>`;
+
+    $("#code").oninput = (e) => (c.code = e.target.value);
+    $("#name").oninput = (e) => (c.name = e.target.value);
+    $("#main").querySelectorAll("[data-f]").forEach((el) => {
+      const i = Number(el.dataset.i), f = el.dataset.f;
+      el.oninput = el.onchange = () => {
+        c.items[i][f] = f === "final" ? el.checked : f === "weight" ? Number(el.value) : el.value;
+        if (f === "weight") renderEditorTotal();
+      };
+    });
+    $("#main").querySelectorAll("[data-del]").forEach((b) => b.onclick = () => { c.items.splice(Number(b.dataset.del), 1); renderEditor(); });
+    $("#addItem").onclick = () => { c.items.push({ name: "", weight: 0 }); renderEditor(); };
+    $("#cancel").onclick = () => { editing = null; render(); };
+    $("#save").onclick = saveEditor;
+    if (!c.isNew) $("#remove").onclick = () => {
+      if (!confirm(`${c.oldCode} silinsin mi?`)) return;
+      custom = custom.filter((x) => x.code !== c.oldCode);
+      delete scores[c.oldCode];
+      store.set("nh_custom", custom); store.set("nh_scores", scores);
+      editing = null; selected = COURSES[0].code; render();
+    };
+  }
+
+  function renderEditorTotal() {
+    const total = editing.items.reduce((s, it) => s + (Number(it.weight) || 0), 0);
+    const b = $(".editor .sub b");
+    b.textContent = `%${total}`;
+    b.style.color = `var(${total === 100 ? "--ok" : "--bad"})`;
+  }
+
+  function saveEditor() {
+    const c = editing;
+    const code = c.code.trim().toUpperCase();
+    const items = c.items.filter((it) => it.name.trim() && it.weight > 0)
+      .map((it) => ({ name: it.name.trim(), weight: Number(it.weight), ...(it.final ? { final: true } : {}) }));
+    if (!code) return alert("Ders kodunu yaz.");
+    if (!items.length) return alert("En az bir bileşen ekle.");
+    const clash = allCourses().some((x) => x.code === code && x.code !== c.oldCode);
+    if (clash) return alert("Bu kodla bir ders zaten var.");
+    const course = { code, name: c.name.trim() || code, items };
+    if (c.isNew) custom.push(course);
+    else {
+      custom = custom.map((x) => (x.code === c.oldCode ? course : x));
+      const old = scores[c.oldCode];
+      delete scores[c.oldCode];
+      // Bileşen sayısı değiştiyse eski notlar yanlış satıra düşmesin
+      const prev = custom.find((x) => x.code === code);
+      if (old && prev && prev.items.length === items.length) scores[code] = old;
+      store.set("nh_scores", scores);
+    }
+    store.set("nh_custom", custom);
+    selected = code; store.set("nh_selected", selected);
+    editing = null; render();
+  }
+
+  function render() {
+    renderChips();
+    if (editing) return renderEditor();
+    const course = allCourses().find((c) => c.code === selected) || COURSES[0];
+    selected = course.code;
+    renderCourse(course);
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
